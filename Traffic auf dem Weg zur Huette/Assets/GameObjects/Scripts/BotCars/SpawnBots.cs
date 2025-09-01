@@ -1,88 +1,62 @@
 using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
-
-enum Lane
-{
-    leftCounter, rightCounter, left, right
-}
 
 public class SpawnBots : MonoBehaviour
 {
     public GameObject[] cars;
-    private Lane lane = Lane.leftCounter;
-    public LaneScript[] coll;
-    
+    private int enterMutex;
+
+    private void Start()
+    {
+        CarController.OnPlayerTeleport += HandleTeleport;
+    }
+
+    private void OnDestroy()
+    {
+        CarController.OnPlayerTeleport -= HandleTeleport;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.layer == LayerMask.NameToLayer("AICars")) enterMutex++;
+    }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
-        {
-            spawn();
-            spawn();
-            spawn();
-        }
+        if (other.gameObject.layer == LayerMask.NameToLayer("AICars")) enterMutex--;
+        ;
     }
 
-    public void spawn()
-    {
-        int number = Random.Range(0, cars.Length-1);
-        int temp = 0;
 
+    private void HandleTeleport(float distance)
+    {
+        StartCoroutine(spawn(1));
+        StartCoroutine(spawn(2));
+        StartCoroutine(spawn(3));
+        StartCoroutine(spawn(4));
+    }
+
+    public IEnumerator spawn(int lane)
+    {
+        yield return new WaitUntil(() => enterMutex == 0);
         switch (lane)
         {
-            case Lane.leftCounter:
-                while (temp == 0)
-                {
-                    if (!coll[0].getEntered())
-                    {
-
-                        Instantiate(cars[number], new Vector3(-13.4f, 0.14f, coll[0].transform.position.z), Quaternion.AngleAxis(180f, Vector3.up));
-                        temp = 1;
-                    }
-                }
-                lane = Lane.rightCounter;
-                break ;
-            case Lane.rightCounter:
-                while (temp == 0)
-                {
-                    if (!coll[1].getEntered())
-                    {
-                        Instantiate(cars[number], new Vector3(-18.5f, 0.14f, coll[1].transform.position.z), Quaternion.AngleAxis(180f, Vector3.up));
-                        temp = 1;
-                    }
-                }
-                lane = Lane.left;
-                break ;
-            case Lane.left:
-                while (temp == 0)
-                {
-                    if (!coll[2].getEntered())
-                    {
-                        Instantiate(cars[number], new Vector3(-7.5f, 0.14f, coll[2].transform.position.z), Quaternion.identity);
-                        temp = 1;
-                    }
-                }
-                lane = Lane.right;
-                break ;
-            case Lane.right:
-                while (temp == 0)
-                {
-                    if (!coll[3].getEntered())
-                    {
-                        Instantiate(cars[number], new Vector3(-2.5f, 0.14f, coll[3].transform.position.z), Quaternion.identity);
-                        temp = 1;
-                    }
-                }
-                lane = Lane.leftCounter;
-                break ;  
+            case 1:
+                Instantiate(cars[Random.Range(0, 4)], new Vector3(-18.4f, 0.22f, gameObject.transform.position.z),
+                    Quaternion.AngleAxis(180f, Vector3.up));
+                break;
+            case 2:
+                Instantiate(cars[Random.Range(0, 4)], new Vector3(-13.20901f, 0.22f, gameObject.transform.position.z),
+                    Quaternion.AngleAxis(180f, Vector3.up));
+                break;
+            case 3:
+                Instantiate(cars[Random.Range(0, 4)], new Vector3(-7.527071f, 0.22f, gameObject.transform.position.z),
+                    Quaternion.AngleAxis(180, Vector3.up));
+                break;
+            case 4:
+                Instantiate(cars[Random.Range(0, 4)], new Vector3(-2.415442f, 0.22f, gameObject.transform.position.z),
+                    Quaternion.AngleAxis(180, Vector3.up));
+                break;
         }
-
-        temp = 0;
-
-        
     }
-
-
 }

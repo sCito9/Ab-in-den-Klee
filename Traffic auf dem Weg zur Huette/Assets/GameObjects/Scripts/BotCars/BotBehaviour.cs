@@ -1,36 +1,22 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.SocialPlatforms.Impl;
+using Random = UnityEngine.Random;
 
 public class BotBehaviour : MonoBehaviour
 {
-
-    
-
     public LayerMask mask;
-    
 
-    
-    [SerializeField]
-    private float currentSpeed;
-    private Rigidbody rb;
-    private float acc = 0;
-    private bool brakebool = false;
-    private Score score;
-    private AudioSource source;
-    
-    private bool crashed = false;
+
+    public float topSpeed;
+    [SerializeField] private AudioClip[] clip;
 
     private Transform _transform;
-    
-    
-    
-    public float topSpeed;
-    [SerializeField] private float minSpeed;
-    [SerializeField] private AudioClip[] clip;
+    private float acc = 0;
+    private bool brakebool = false;
+
+    private bool crashed;
+    private Rigidbody rb;
+    private AudioSource source;
 
     private void Awake()
     {
@@ -41,35 +27,55 @@ public class BotBehaviour : MonoBehaviour
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
-        minSpeed = UnityEngine.Random.Range(40.0f, 59.0f);
-        topSpeed = UnityEngine.Random.Range(60.0f, 120.0f);
-        score = FindObjectOfType<Score>();
+        topSpeed = Random.Range(17f, 26.0f);
         source = GetComponent<AudioSource>();
 
-        float temp2 = clip.Length - 0.1f;
-        float temp = UnityEngine.Random.Range(0f, temp2);
+        var temp2 = clip.Length - 0.1f;
+        var temp = Random.Range(0f, temp2);
         source.clip = clip[(int)temp];
+
+        StartCoroutine(checkFront());
+        CarController.OnPlayerTeleport += HandleTeleport;
     }
 
 
-
-    private void UpdateSpeed()
+    private void Update()
     {
-        currentSpeed = rb.velocity.magnitude * 3.6f;
-    }
+        if (!crashed) transform.Translate(Vector3.forward * (topSpeed * Time.deltaTime));
 
-    public void accelerate()
-    {
-        acc = 1;
-    }
-
-
-    private void FixedUpdate()
-    {
-        if (!crashed)
+        if (transform.position.z < -650f)
         {
-            rb.AddForce(transform.forward * (topSpeed * Time.deltaTime));
+            transform.position = new Vector3(_transform.position.x, _transform.position.y,
+                800 - (-650f - transform.position.z));
+            transform.rotation = Quaternion.Euler(0f, 180f, 0f);
         }
+    }
+
+    private void OnDestroy()
+    {
+        CarController.OnPlayerTeleport -= HandleTeleport;
+    }
+
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Environment") || collision.gameObject.CompareTag("Player"))
+            this.collision();
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Environment")) collision();
+    }
+
+
+    private void HandleTeleport(float distance)
+    {
+        topSpeed += Random.Range(3f, 5f);
+
+        transform.position =
+            new Vector3(_transform.position.x, _transform.position.y, transform.position.z - distance);
+        transform.rotation = _transform.rotation;
     }
 
 
@@ -82,76 +88,55 @@ public class BotBehaviour : MonoBehaviour
     {
         topSpeed = speed;
     }
-    
-   
+
+
     private IEnumerator checkFront()
     {
-        yield return new WaitForSeconds(0.7f);
-        if (Physics.Raycast(new Vector3(transform.position.x, 1.5f, transform.position.z), Vector3.forward, out RaycastHit hitInfo, 35f, mask))
+        while (true)
         {
-            BotBehaviour bB = hitInfo.transform.gameObject.GetComponent<BotBehaviour>();
-            float temp = bB.getTopSpeed();
-            bB.setTopSpeed(topSpeed);
-            topSpeed = temp;
-            
-
+            yield return new WaitForSeconds(0.7f);
+            if (Physics.Raycast(new Vector3(transform.position.x, 1.5f, transform.position.z), Vector3.forward,
+                    out var hitInfo, 35f, mask))
+            {
+                var bB = hitInfo.transform.gameObject.GetComponent<BotBehaviour>();
+                if (bB.crashed)
+                {
+                    rb.constraints = RigidbodyConstraints.None;
+                    crashed = true;
+                    StartCoroutine(kill());
+                    yield return new WaitForSeconds(6f);
+                }
+                else
+                {
+                    var temp = bB.getTopSpeed();
+                    bB.setTopSpeed(topSpeed);
+                    topSpeed = temp;
+                }
+            }
         }
-        
-
     }
-    
-    
+
 
     public void collision()
     {
+        rb.constraints = RigidbodyConstraints.None;
         source.Play();
-        rb.mass = 500;
         crashed = true;
-        rb.AddExplosionForce(10f, transform.position, 7f);
-        
+        rb.AddExplosionForce(3f, transform.position, 3f);
+
         StartCoroutine(kill());
     }
 
-    private IEnumerator kill (){
-
+    private IEnumerator kill()
+    {
         yield return new WaitForSeconds(5f);
-        rb.mass = 1600;
         transform.position = new Vector3(_transform.position.x, _transform.position.y, 421);
         transform.rotation = _transform.rotation;
+
+        rb.constraints = RigidbodyConstraints.FreezeRotation;
+        rb.constraints = RigidbodyConstraints.FreezePositionX;
+        rb.constraints = RigidbodyConstraints.FreezePositionY;
+
         crashed = false;
     }
-
-    
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Environment")||collision.gameObject.CompareTag("Player"))
-        {
-            this.collision();
-        }
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        Debug.Log("trigger");
-        if (other.gameObject.CompareTag("Environment"))
-        {
-            this.collision();
-        }
-        if (other.gameObject.CompareTag("Loop"))
-        {
-
-            transform.position = new Vector3(_transform.position.x, _transform.position.y, -640);
-            transform.rotation = _transform.rotation;
-            score.addScore();
-  
-        }else if (other.gameObject.CompareTag("LoopCounter"))
-        {
-            transform.position = new Vector3(_transform.position.x, _transform.position.y, 421);
-            transform.rotation = _transform.rotation;
-            score.addScore();
-        }
-    }
-
-
 }
