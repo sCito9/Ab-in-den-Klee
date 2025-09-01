@@ -1,0 +1,5 @@
+C:/Users/felix/Desktop/Unity/Traffic auf dem Weg zur Huette/.utmp/RelWithDebInfo/2f2x243z/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/felix/Desktop/Unity/Traffic auf dem Weg zur Huette/.utmp/RelWithDebInfo/2f2x243z/armeabi-v7a/CMakeFiles/rebuild_cache.dir
+C:/Users/felix/Desktop/Unity/Traffic auf dem Weg zur Huette/.utmp/RelWithDebInfo/2f2x243z/armeabi-v7a/FramePacing/CMakeFiles/swappywrapper.dir
+C:/Users/felix/Desktop/Unity/Traffic auf dem Weg zur Huette/.utmp/RelWithDebInfo/2f2x243z/armeabi-v7a/FramePacing/CMakeFiles/edit_cache.dir
+C:/Users/felix/Desktop/Unity/Traffic auf dem Weg zur Huette/.utmp/RelWithDebInfo/2f2x243z/armeabi-v7a/FramePacing/CMakeFiles/rebuild_cache.dir
